@@ -15,14 +15,15 @@ class CreateOrganization
     /**
      * Create a company workspace with its built-in roles and the template's categories, owned by a new administrator.
      *
-     * @param  array{company_name: string, name: string, email: string, password: string, department?: ?string}  $attributes
+     * @param  array{company_name: string, name: string, email: string, password: string}  $attributes
      */
-    public function handle(array $attributes, Plan $plan = Plan::Free, ?string $locale = null, HelpDeskTemplate $template = HelpDeskTemplate::General): User
+    public function handle(array $attributes, Plan $plan = Plan::Free, ?string $locale = null, HelpDeskTemplate $template = HelpDeskTemplate::General, ?string $timezone = null): User
     {
-        return DB::transaction(function () use ($attributes, $plan, $locale, $template): User {
+        return DB::transaction(function () use ($attributes, $plan, $locale, $template, $timezone): User {
             $organization = new Organization([
                 'name' => $attributes['company_name'],
                 'default_locale' => $locale ?? config('app.locale'),
+                'timezone' => $timezone ?? config('helpdesk.default_timezone'),
             ]);
             $organization->plan = $plan;
             $organization->save();
@@ -34,7 +35,6 @@ class CreateOrganization
                 'name' => $attributes['name'],
                 'email' => $attributes['email'],
                 'password' => $attributes['password'],
-                'department' => $attributes['department'] ?? null,
             ]);
             $owner->organization()->associate($organization);
             $owner->role()->associate(Role::withoutGlobalScope('organization')

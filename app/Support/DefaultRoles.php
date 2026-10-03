@@ -26,7 +26,7 @@ class DefaultRoles
         return [
             ['name' => 'Administrator', 'slug' => Role::AdministratorSlug, 'description' => 'Full access to every part of the help desk.', 'permissions' => []],
             ['name' => 'Supervisor', 'slug' => 'supervisor', 'description' => 'Leads the support team, receives escalations and configures SLAs and workflows.', 'permissions' => [
-                ...$staff, Permission::ReportsView, Permission::SlaManage, Permission::WorkflowsManage, Permission::CategoriesManage,
+                ...$staff, Permission::ReportsView, Permission::SlaManage, Permission::WorkflowsManage, Permission::CategoriesManage, Permission::TeamsManage,
             ]],
             ['name' => 'Support Agent', 'slug' => 'agent', 'description' => 'Works and resolves tickets.', 'permissions' => $staff],
             ['name' => 'Requester', 'slug' => 'requester', 'description' => 'Employees who submit tickets.', 'permissions' => [Permission::TicketsCreate, Permission::ApiAccess]],

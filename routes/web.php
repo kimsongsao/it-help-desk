@@ -7,14 +7,16 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\SocialLoginController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OrganizationSettingsController;
-use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Platform\OrganizationController as PlatformOrganizationController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SlaPolicyController;
+use App\Http\Controllers\TeamController;
 use App\Http\Controllers\TicketAttachmentController;
 use App\Http\Controllers\TicketCommentController;
 use App\Http\Controllers\TicketController;
@@ -74,6 +76,8 @@ Route::middleware(['auth', 'active', 'tenant'])->group(function () {
     Route::resource('sla-policies', SlaPolicyController::class)->except(['show'])->middleware('can:sla.manage');
     Route::resource('workflows', WorkflowController::class)->except(['show'])->middleware('can:workflows.manage');
     Route::resource('categories', CategoryController::class)->except(['show'])->middleware('can:categories.manage');
+    Route::resource('teams', TeamController::class)->except(['show'])->middleware('can:teams.manage');
+    Route::resource('departments', DepartmentController::class)->except(['show'])->middleware('can:users.manage');
     Route::resource('users', UserController::class)->except(['show', 'destroy'])->middleware('can:users.manage');
     Route::resource('roles', RoleController::class)->except(['show'])->middleware('can:roles.manage');
 

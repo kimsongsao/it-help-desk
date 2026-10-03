@@ -31,6 +31,7 @@ class ListTicketsRequest extends FormRequest
             'priority' => ['nullable', Rule::enum(TicketPriority::class)],
             'category' => ['nullable', 'integer'],
             'assignee' => ['nullable', Rule::in(['me', 'unassigned'])],
+            'team' => ['nullable', 'regex:/^(mine|none|\d+)$/'],
             'sla' => ['nullable', Rule::in(['breached', 'at_risk', 'escalated'])],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
         ];

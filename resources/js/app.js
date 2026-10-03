@@ -1,4 +1,5 @@
 import '@tabler/core/dist/js/tabler.esm.min.js';
+import { initAvatarCropper } from './avatar-cropper.js';
 import { initComposers } from './ticket-composer.js';
 
 /**
@@ -87,4 +88,12 @@ document.querySelectorAll('[data-telegram-login]').forEach((button) => {
     });
 });
 
+/**
+ * Tell the server which time zone the browser is in, so dates can be shown in local time.
+ */
+document.querySelectorAll('[data-browser-timezone]').forEach((input) => {
+    input.value = Intl.DateTimeFormat().resolvedOptions().timeZone ?? '';
+});
+
 initComposers();
+initAvatarCropper();

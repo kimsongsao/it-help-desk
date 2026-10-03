@@ -28,6 +28,18 @@
                         </div>
                         <x-field-error name="icon" />
                     </div>
+                    @if ($teams->isNotEmpty())
+                        <div class="mb-3">
+                            <label class="form-label" for="default_team_id">{{ __('Route new tickets to team') }}</label>
+                            <select id="default_team_id" name="default_team_id" @class(['form-select', 'is-invalid' => $errors->has('default_team_id')])>
+                                <option value="">{{ __('No team') }}</option>
+                                @foreach ($teams as $team)
+                                    <option value="{{ $team->id }}" @selected((int) old('default_team_id', $category->default_team_id) === $team->id)>{{ $team->name }}</option>
+                                @endforeach
+                            </select>
+                            <x-field-error name="default_team_id" />
+                        </div>
+                    @endif
                     <div>
                         <label class="form-label" for="description">{{ __('Description') }}</label>
                         <input id="description" name="description" type="text" value="{{ old('description', $category->description) }}" maxlength="255" @class(['form-control', 'is-invalid' => $errors->has('description')])>

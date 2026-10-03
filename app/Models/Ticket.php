@@ -19,7 +19,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['subject', 'description', 'status', 'priority', 'category_id', 'assignee_id'])]
+#[Fillable(['subject', 'description', 'status', 'priority', 'category_id', 'assignee_id', 'team_id'])]
 class Ticket extends Model
 {
     /** @use HasFactory<TicketFactory> */
@@ -102,6 +102,16 @@ class Ticket extends Model
     public function assignee(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assignee_id');
+    }
+
+    /**
+     * Get the support team the ticket is routed to.
+     *
+     * @return BelongsTo<Team, $this>
+     */
+    public function team(): BelongsTo
+    {
+        return $this->belongsTo(Team::class);
     }
 
     /**
@@ -257,7 +267,8 @@ class Ticket extends Model
 
         $query->where(fn (Builder $query) => $query
             ->whereBelongsTo($user, 'requester')
-            ->orWhereBelongsTo($user, 'assignee'));
+            ->orWhereBelongsTo($user, 'assignee')
+            ->orWhereIn('team_id', $user->teams()->select('teams.id')));
     }
 
     /**
@@ -296,7 +307,7 @@ class Ticket extends Model
     /**
      * Scope the query using the filters available on the ticket list.
      *
-     * @param  array{search?: ?string, status?: ?string, priority?: ?string, category?: int|string|null, assignee?: ?string, sla?: ?string}  $filters
+     * @param  array{search?: ?string, status?: ?string, priority?: ?string, category?: int|string|null, assignee?: ?string, team?: int|string|null, sla?: ?string}  $filters
      */
     #[Scope]
     protected function filter(Builder $query, array $filters, User $user): void
@@ -310,6 +321,9 @@ class Ticket extends Model
             ->when($filters['category'] ?? null, fn (Builder $query, int|string $category) => $query->where('category_id', $category))
             ->when(($filters['assignee'] ?? null) === 'me', fn (Builder $query) => $query->whereBelongsTo($user, 'assignee'))
             ->when(($filters['assignee'] ?? null) === 'unassigned', fn (Builder $query) => $query->whereNull('assignee_id'))
+            ->when(($filters['team'] ?? null) === 'mine', fn (Builder $query) => $query->whereIn('team_id', $user->teams()->select('teams.id')))
+            ->when(($filters['team'] ?? null) === 'none', fn (Builder $query) => $query->whereNull('team_id'))
+            ->when(is_numeric($filters['team'] ?? null), fn (Builder $query) => $query->where('team_id', (int) $filters['team']))
             ->when(($filters['sla'] ?? null) === 'breached', fn (Builder $query) => $query->slaBreached())
             ->when(($filters['sla'] ?? null) === 'at_risk', fn (Builder $query) => $query->slaAtRisk())
             ->when(($filters['sla'] ?? null) === 'escalated', fn (Builder $query) => $query->active()->where('escalation_level', '>', 0));

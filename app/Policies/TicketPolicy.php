@@ -23,7 +23,8 @@ class TicketPolicy
     {
         return $user->hasPermission(Permission::TicketsViewAll)
             || $ticket->requester_id === $user->id
-            || $ticket->assignee_id === $user->id;
+            || $ticket->assignee_id === $user->id
+            || ($ticket->team_id !== null && $user->teams()->whereKey($ticket->team_id)->exists());
     }
 
     /**

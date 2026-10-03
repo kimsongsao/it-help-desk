@@ -26,6 +26,7 @@ class OrganizationFactory extends Factory
             'allowed_email_domains' => [],
             'allow_self_registration' => false,
             'default_locale' => 'en',
+            'timezone' => 'Asia/Phnom_Penh',
         ];
     }
 

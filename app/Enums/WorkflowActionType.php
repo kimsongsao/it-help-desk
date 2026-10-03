@@ -9,6 +9,7 @@ enum WorkflowActionType: string
     case SetCategory = 'set_category';
     case AssignTo = 'assign_to';
     case AssignLeastBusy = 'assign_least_busy';
+    case AssignToTeam = 'assign_to_team';
     case AddInternalNote = 'add_internal_note';
     case Escalate = 'escalate';
 
@@ -23,6 +24,7 @@ enum WorkflowActionType: string
             self::SetCategory => 'Set category to',
             self::AssignTo => 'Assign to',
             self::AssignLeastBusy => 'Assign to least busy agent',
+            self::AssignToTeam => 'Route to team',
             self::AddInternalNote => 'Add internal note',
             self::Escalate => 'Escalate with reason',
         }, locale: $locale);

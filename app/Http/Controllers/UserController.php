@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
+use App\Models\Department;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
@@ -20,6 +21,7 @@ class UserController extends Controller
         $filters = $request->validate([
             'search' => ['nullable', 'string', 'max:255'],
             'role' => ['nullable', 'integer'],
+            'department' => ['nullable', 'integer'],
         ]);
 
         return view('users.index', [
@@ -28,6 +30,8 @@ class UserController extends Controller
                     fn ($query) => $query->whereLike('name', "%{$search}%")->orWhereLike('email', "%{$search}%")
                 ))
                 ->when($filters['role'] ?? null, fn ($query, int $role) => $query->where('role_id', $role))
+                ->when($filters['department'] ?? null, fn ($query, int $department) => $query->where('department_id', $department))
+                ->with(['department', 'teams'])
                 ->withCount(['requestedTickets', 'assignedTickets'])
                 ->orderBy('name')
                 ->paginate(20)
@@ -45,6 +49,7 @@ class UserController extends Controller
         return view('users.form', [
             'user' => new User(['is_active' => true]),
             'roles' => Role::orderBy('id')->get(),
+            'departments' => Department::orderBy('name')->get(),
         ]);
     }
 
@@ -69,6 +74,7 @@ class UserController extends Controller
         return view('users.form', [
             'user' => $user,
             'roles' => Role::orderBy('id')->get(),
+            'departments' => Department::orderBy('name')->get(),
         ]);
     }
 

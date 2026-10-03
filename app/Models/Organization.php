@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
-#[Fillable(['name', 'allowed_email_domains', 'allow_self_registration', 'default_locale'])]
+#[Fillable(['name', 'allowed_email_domains', 'allow_self_registration', 'default_locale', 'timezone'])]
 class Organization extends Model
 {
     /** @use HasFactory<OrganizationFactory> */
@@ -29,6 +29,7 @@ class Organization extends Model
         'allowed_email_domains' => '[]',
         'allow_self_registration' => false,
         'default_locale' => 'en',
+        'timezone' => 'UTC',
     ];
 
     /**

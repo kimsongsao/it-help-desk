@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Profile;
 
+use App\Support\Tenancy;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -32,8 +33,9 @@ class UpdateProfileRequest extends FormRequest
                 'string', 'lowercase', 'email', 'max:255',
                 Rule::unique('users', 'email')->ignore($this->user()),
             ],
-            'department' => ['nullable', 'string', 'max:100'],
+            'department_id' => ['nullable', 'integer', app(Tenancy::class)->exists('departments')],
             'locale' => ['required', Rule::in(array_keys(config('helpdesk.locales')))],
+            'timezone' => ['nullable', 'timezone:all'],
             'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048', 'dimensions:min_width=64,min_height=64,max_width=6000,max_height=6000'],
         ];
     }

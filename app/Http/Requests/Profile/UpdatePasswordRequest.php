@@ -9,6 +9,13 @@ use Illuminate\Validation\Rules\Password;
 class UpdatePasswordRequest extends FormRequest
 {
     /**
+     * Keep the password form's errors apart from the profile form's.
+     *
+     * @var string
+     */
+    protected $errorBag = 'password';
+
+    /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
@@ -29,15 +36,5 @@ class UpdatePasswordRequest extends FormRequest
             'current_password' => $this->user()->hasPassword() ? ['required', 'current_password'] : ['prohibited'],
             'password' => ['required', 'confirmed', Password::defaults()],
         ];
-    }
-
-    /**
-     * Get the error bag for the password form, so its errors do not mix with the profile form.
-     */
-    protected function getValidatorInstance(): \Illuminate\Contracts\Validation\Validator
-    {
-        $this->errorBag = 'password';
-
-        return parent::getValidatorInstance();
     }
 }

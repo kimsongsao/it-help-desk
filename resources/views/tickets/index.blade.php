@@ -1,7 +1,7 @@
 @php
     $user = auth()->user();
     $activeStatus = $filters['status'] ?? null;
-    $hasExtraFilters = filled($filters['priority'] ?? null) || filled($filters['category'] ?? null) || filled($filters['assignee'] ?? null) || filled($filters['sla'] ?? null);
+    $hasExtraFilters = filled($filters['priority'] ?? null) || filled($filters['category'] ?? null) || filled($filters['assignee'] ?? null) || filled($filters['sla'] ?? null) || filled($filters['team'] ?? null);
 @endphp
 
 <x-layouts.app :title="__('Tickets')">
@@ -79,6 +79,18 @@
                                     <option value="unassigned" @selected(($filters['assignee'] ?? null) === 'unassigned')>{{ __('Unassigned') }}</option>
                                 </select>
                             </div>
+                            @if ($teams->isNotEmpty())
+                                <div class="col-6 col-lg">
+                                    <select name="team" class="form-select" aria-label="{{ __('Team') }}">
+                                        <option value="">{{ __('Any team') }}</option>
+                                        <option value="mine" @selected(($filters['team'] ?? null) === 'mine')>{{ __('My teams') }}</option>
+                                        <option value="none" @selected(($filters['team'] ?? null) === 'none')>{{ __('No team') }}</option>
+                                        @foreach ($teams as $team)
+                                            <option value="{{ $team->id }}" @selected((string) ($filters['team'] ?? '') === (string) $team->id)>{{ $team->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            @endif
                             <div class="col-6 col-lg">
                                 <select name="sla" class="form-select" aria-label="{{ __('SLA') }}">
                                     <option value="">{{ __('Any SLA state') }}</option>

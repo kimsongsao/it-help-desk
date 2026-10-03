@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\JoinOrganizationRequest;
+use App\Models\Department;
 use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
@@ -22,7 +23,10 @@ class JoinOrganizationController extends Controller
 
         $request->session()->put('joining_organization_id', $organization->id);
 
-        return view('auth.join', ['organization' => $organization]);
+        return view('auth.join', [
+            'organization' => $organization,
+            'departments' => Department::withoutGlobalScope('organization')->whereBelongsTo($organization)->orderBy('name')->get(),
+        ]);
     }
 
     /**
@@ -32,9 +36,10 @@ class JoinOrganizationController extends Controller
     {
         abort_unless($this->isOpen($organization), 404);
 
-        $user = new User($request->validated());
+        $user = new User($request->safe()->except('timezone'));
         $user->organization()->associate($organization);
         $user->locale = app()->getLocale();
+        $user->timezone = $request->validated('timezone') !== $organization->timezone ? $request->validated('timezone') : null;
         $user->save();
 
         Auth::login($user);

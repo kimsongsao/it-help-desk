@@ -18,7 +18,7 @@ new ApexCharts(document.getElementById('chart-volume'), {
         { name: data.labels.created, data: data.volume.created },
         { name: data.labels.resolved, data: data.volume.resolved },
     ],
-    xaxis: { categories: data.volume.labels, type: 'datetime', labels: { datetimeUTC: false } },
+    xaxis: { categories: data.volume.labels, tickAmount: Math.min(data.volume.labels.length, 10), labels: { rotate: 0 } },
     yaxis: { min: 0, tickAmount: Math.min(volumeMax, 5), labels: { formatter: (value) => Math.round(value) } },
     stroke: { width: 2, curve: 'smooth' },
     fill: { opacity: 0.16, type: 'solid' },

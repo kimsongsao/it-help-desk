@@ -16,6 +16,7 @@
 
     <form method="POST" action="{{ route('join', $organization) }}" novalidate>
         @csrf
+        <input type="hidden" name="timezone" data-browser-timezone>
 
         <div class="mb-3">
             <label class="form-label required" for="name">{{ __('Full name') }}</label>
@@ -35,13 +36,18 @@
             <x-field-error name="email" />
         </div>
 
-        <div class="mb-3">
-            <label class="form-label" for="department">{{ __('Department') }} <span class="form-label-description">{{ __('Optional') }}</span></label>
-            <div class="input-group input-group-flat">
-                <span class="input-group-text"><i class="ti ti-building"></i></span>
-                <input id="department" name="department" type="text" value="{{ old('department') }}" class="form-control">
+        @if ($departments->isNotEmpty())
+            <div class="mb-3">
+                <label class="form-label" for="department_id">{{ __('Department') }} <span class="form-label-description">{{ __('Optional') }}</span></label>
+                <select id="department_id" name="department_id" @class(['form-select', 'is-invalid' => $errors->has('department_id')])>
+                                <option value="">{{ __('No department') }}</option>
+                                @foreach ($departments as $department)
+                                    <option value="{{ $department->id }}" @selected((int) old('department_id') === $department->id)>{{ $department->name }}</option>
+                                @endforeach
+                            </select>
+                            <x-field-error name="department_id" />
             </div>
-        </div>
+        @endif
 
         <div class="row">
             <div class="col-sm-6 mb-3">

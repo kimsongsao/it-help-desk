@@ -73,7 +73,7 @@
                             </td>
                             <td class="text-end">{{ $organization->users_count }}</td>
                             <td class="text-end">{{ $organization->tickets_count }}</td>
-                            <td class="text-secondary">{{ $organization->created_at->translatedFormat('j M Y') }}</td>
+                            <td class="text-secondary">{{ $organization->created_at->forViewer()->translatedFormat('j M Y') }}</td>
                         </tr>
                     @empty
                         <tr><td colspan="6"><x-empty-state icon="ti-building" :title="__('No organizations found')" /></td></tr>

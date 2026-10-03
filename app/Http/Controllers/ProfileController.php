@@ -6,6 +6,7 @@ use App\Actions\Profile\UpdateAvatar;
 use App\Enums\SocialProvider;
 use App\Http\Requests\Profile\UpdatePasswordRequest;
 use App\Http\Requests\Profile\UpdateProfileRequest;
+use App\Models\Department;
 use App\Models\SocialAccount;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -25,6 +26,7 @@ class ProfileController extends Controller
             'user' => $user,
             'socialAccounts' => $user->socialAccounts()->get()->keyBy(fn (SocialAccount $account) => $account->provider->value),
             'providers' => SocialProvider::cases(),
+            'departments' => Department::orderBy('name')->get(),
         ]);
     }
 
@@ -35,8 +37,9 @@ class ProfileController extends Controller
     {
         $user = $request->user();
 
-        $user->fill($request->safe()->only(['name', 'email', 'department']));
+        $user->fill($request->safe()->only(['name', 'email', 'department_id']));
         $user->locale = $request->validated('locale');
+        $user->timezone = $request->validated('timezone');
 
         if ($user->isDirty('email')) {
             $user->email_verified_at = null;

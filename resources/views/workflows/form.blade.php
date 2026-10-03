@@ -4,6 +4,7 @@
         App\Enums\WorkflowField::Priority->value => $valueOptions['priority'],
         App\Enums\WorkflowField::Category->value => $valueOptions['category'],
         App\Enums\WorkflowField::Assignee->value => $valueOptions['user'],
+        App\Enums\WorkflowField::Team->value => $valueOptions['team'],
     ];
     $actionValues = [
         App\Enums\WorkflowActionType::SetStatus->value => $valueOptions['status'],
@@ -11,6 +12,7 @@
         App\Enums\WorkflowActionType::SetCategory->value => $valueOptions['category'],
         App\Enums\WorkflowActionType::AssignTo->value => $valueOptions['user'],
         App\Enums\WorkflowActionType::AssignLeastBusy->value => null,
+        App\Enums\WorkflowActionType::AssignToTeam->value => $valueOptions['team'],
         App\Enums\WorkflowActionType::AddInternalNote->value => 'textarea',
         App\Enums\WorkflowActionType::Escalate->value => 'textarea',
     ];

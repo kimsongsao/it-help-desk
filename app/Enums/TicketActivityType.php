@@ -9,6 +9,7 @@ enum TicketActivityType: string
     case PriorityChanged = 'priority_changed';
     case CategoryChanged = 'category_changed';
     case Assigned = 'assigned';
+    case TeamChanged = 'team_changed';
     case Commented = 'commented';
     case Escalated = 'escalated';
     case SlaBreached = 'sla_breached';
@@ -25,6 +26,7 @@ enum TicketActivityType: string
             self::PriorityChanged => 'ti-flag',
             self::CategoryChanged => 'ti-category',
             self::Assigned => 'ti-user-check',
+            self::TeamChanged => 'ti-users-group',
             self::Commented => 'ti-message',
             self::Escalated => 'ti-arrow-big-up-lines',
             self::SlaBreached => 'ti-alarm',
@@ -40,7 +42,7 @@ enum TicketActivityType: string
         return match ($this) {
             self::Escalated, self::SlaBreached => 'red',
             self::WorkflowApplied => 'purple',
-            self::Assigned => 'green',
+            self::Assigned, self::TeamChanged => 'green',
             default => 'blue',
         };
     }

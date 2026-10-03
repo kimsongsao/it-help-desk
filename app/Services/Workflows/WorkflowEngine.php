@@ -12,6 +12,7 @@ use App\Enums\WorkflowField;
 use App\Enums\WorkflowOperator;
 use App\Enums\WorkflowTrigger;
 use App\Models\Category;
+use App\Models\Team;
 use App\Models\Ticket;
 use App\Models\User;
 use App\Models\Workflow;
@@ -117,9 +118,10 @@ class WorkflowEngine
             WorkflowField::Priority => $ticket->priority->value,
             WorkflowField::Category => $ticket->category_id,
             WorkflowField::Assignee => $ticket->assignee_id,
+            WorkflowField::Team => $ticket->team_id,
             WorkflowField::Subject => $ticket->subject,
             WorkflowField::Description => $ticket->description,
-            WorkflowField::RequesterDepartment => $ticket->requester?->department,
+            WorkflowField::RequesterDepartment => $ticket->requester?->department?->name,
             WorkflowField::EscalationLevel => $ticket->escalation_level,
         };
     }
@@ -142,8 +144,12 @@ class WorkflowEngine
                 ? $this->updater->apply($ticket, ['category_id' => (int) $value], null)
                 : null,
             WorkflowActionType::AssignTo => $this->assign($ticket, User::assignable()->where('organization_id', $ticket->organization_id)->find($value)),
+            WorkflowActionType::AssignToTeam => Team::whereKey($value)->where('organization_id', $ticket->organization_id)->exists()
+                ? $this->updater->apply($ticket, ['team_id' => (int) $value], null)
+                : null,
             WorkflowActionType::AssignLeastBusy => $this->assign($ticket, User::assignable()
                 ->where('organization_id', $ticket->organization_id)
+                ->when($ticket->team?->members()->exists(), fn ($query) => $query->whereRelation('teams', 'teams.id', $ticket->team_id))
                 ->withOpenTicketCount()
                 ->orderBy('open_tickets_count')
                 ->orderBy('id')

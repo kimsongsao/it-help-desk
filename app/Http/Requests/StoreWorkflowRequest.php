@@ -9,6 +9,7 @@ use App\Enums\WorkflowField;
 use App\Enums\WorkflowOperator;
 use App\Enums\WorkflowTrigger;
 use App\Models\Category;
+use App\Models\Team;
 use App\Models\User;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -128,6 +129,7 @@ class StoreWorkflowRequest extends FormRequest
             WorkflowActionType::SetCategory => is_numeric($value) && Category::whereKey((int) $value)->exists(),
             WorkflowActionType::AssignTo => is_numeric($value) && User::assignable()->whereKey((int) $value)->exists(),
             WorkflowActionType::AssignLeastBusy => true,
+            WorkflowActionType::AssignToTeam => is_numeric($value) && Team::whereKey((int) $value)->exists(),
             WorkflowActionType::AddInternalNote, WorkflowActionType::Escalate => filled($value),
         };
     }

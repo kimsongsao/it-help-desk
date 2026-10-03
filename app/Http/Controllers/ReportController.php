@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\Feature;
 use App\Http\Requests\ReportRequest;
 use App\Models\Ticket;
 use App\Services\Reports\HelpDeskReport;
@@ -15,7 +16,7 @@ class ReportController extends Controller
      */
     public function index(ReportRequest $request): View
     {
-        $report = new HelpDeskReport($request->from(), $request->to(), $request->user()->organization_id);
+        $report = new HelpDeskReport($request->from(), $request->to(), $request->user()->organization_id, $request->timezone());
 
         return view('reports.index', [
             'report' => $report,
@@ -25,6 +26,7 @@ class ReportController extends Controller
             'byStatus' => $report->byStatus(),
             'byCategory' => $report->byCategory(),
             'agents' => $report->agentPerformance(),
+            'teams' => $request->user()->organization->hasFeature(Feature::Teams) ? $report->teamPerformance() : collect(),
         ]);
     }
 
@@ -33,18 +35,18 @@ class ReportController extends Controller
      */
     public function export(ReportRequest $request): StreamedResponse
     {
-        $report = new HelpDeskReport($request->from(), $request->to(), $request->user()->organization_id);
-        $filename = "tickets-{$report->from->toDateString()}-to-{$report->to->toDateString()}.csv";
+        $report = new HelpDeskReport($request->from(), $request->to(), $request->user()->organization_id, $request->timezone());
+        $filename = "tickets-{$report->from->setTimezone($report->timezone)->toDateString()}-to-{$report->to->setTimezone($report->timezone)->toDateString()}.csv";
 
         return response()->streamDownload(function () use ($report): void {
             $output = fopen('php://output', 'w');
 
             fputcsv($output, [
                 'Reference', 'Subject', 'Status', 'Priority', 'Category', 'Requester', 'Department', 'Assignee',
-                'Created', 'First response', 'Resolved', 'First response SLA', 'Resolution SLA', 'Escalation level',
+                'Team', 'Created', 'First response', 'Resolved', 'First response SLA', 'Resolution SLA', 'Escalation level',
             ]);
 
-            $report->ticketsForExport()->lazyById()->each(function (Ticket $ticket) use ($output): void {
+            $report->ticketsForExport()->lazyById()->each(function (Ticket $ticket) use ($output, $report): void {
                 fputcsv($output, [
                     $ticket->reference,
                     $ticket->subject,
@@ -52,11 +54,12 @@ class ReportController extends Controller
                     $ticket->priority->label(),
                     $ticket->category?->name,
                     $ticket->requester->name,
-                    $ticket->requester->department,
+                    $ticket->requester->department?->name,
                     $ticket->assignee?->name,
-                    $ticket->created_at->toDateTimeString(),
-                    $ticket->first_responded_at?->toDateTimeString(),
-                    $ticket->resolved_at?->toDateTimeString(),
+                    $ticket->team?->name,
+                    $ticket->created_at->setTimezone($report->timezone)->toDateTimeString(),
+                    $ticket->first_responded_at?->setTimezone($report->timezone)->toDateTimeString(),
+                    $ticket->resolved_at?->setTimezone($report->timezone)->toDateTimeString(),
                     $ticket->firstResponseSlaStatus()?->label(),
                     $ticket->resolutionSlaStatus()?->label(),
                     $ticket->escalation_level,

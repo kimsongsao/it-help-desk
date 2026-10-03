@@ -6,13 +6,13 @@
 <x-layouts.app :title="__('Reports')">
     <x-slot:header>
         <x-page-header :pretitle="__('Analytics')" :title="__('Help desk report')">
-            <div class="text-secondary mt-1">{{ $report->from->translatedFormat('j M Y') }} – {{ $report->to->translatedFormat('j M Y') }}</div>
+            <div class="text-secondary mt-1">{{ $report->from->forViewer()->translatedFormat('j M Y') }} – {{ $report->to->forViewer()->translatedFormat('j M Y') }}</div>
             <x-slot:actions>
                 <form method="GET" action="{{ route('reports.index') }}" class="d-flex flex-wrap gap-2">
-                    <input type="date" name="from" value="{{ $report->from->toDateString() }}" class="form-control w-auto" aria-label="{{ __('From') }}">
-                    <input type="date" name="to" value="{{ $report->to->toDateString() }}" class="form-control w-auto" aria-label="{{ __('To') }}">
+                    <input type="date" name="from" value="{{ $report->from->forViewer()->toDateString() }}" class="form-control w-auto" aria-label="{{ __('From') }}">
+                    <input type="date" name="to" value="{{ $report->to->forViewer()->toDateString() }}" class="form-control w-auto" aria-label="{{ __('To') }}">
                     <button type="submit" class="btn"><i class="ti ti-calendar-search icon"></i> {{ __('Apply') }}</button>
-                    <a href="{{ route('reports.export', ['from' => $report->from->toDateString(), 'to' => $report->to->toDateString()]) }}" class="btn btn-primary"><i class="ti ti-download icon"></i> {{ __('Export CSV') }}</a>
+                    <a href="{{ route('reports.export', ['from' => $report->from->forViewer()->toDateString(), 'to' => $report->to->forViewer()->toDateString()]) }}" class="btn btn-primary"><i class="ti ti-download icon"></i> {{ __('Export CSV') }}</a>
                 </form>
             </x-slot:actions>
         </x-page-header>
@@ -81,6 +81,42 @@
             </div>
         </div>
 
+        @if ($teams->isNotEmpty())
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header"><h3 class="card-title">{{ __('Team performance') }}</h3></div>
+                    <div class="table-responsive">
+                        <table class="table table-vcenter card-table">
+                            <thead>
+                                <tr>
+                                    <th>{{ __('Team') }}</th>
+                                    <th class="text-end">{{ __('Members') }}</th>
+                                    <th class="text-end">{{ __('Open now') }}</th>
+                                    <th class="text-end">{{ __('Created') }}</th>
+                                    <th class="text-end">{{ __('Resolved') }}</th>
+                                    <th class="text-end">{{ __('SLA breaches') }}</th>
+                                    <th class="text-end">{{ __('Avg. resolution') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($teams as $team)
+                                    <tr>
+                                        <td><span class="badge bg-{{ $team->color }} me-2"></span>{{ $team->name }}</td>
+                                        <td class="text-end">{{ $team->members_count }}</td>
+                                        <td class="text-end"><a href="{{ route('tickets.index', ['team' => $team->id]) }}">{{ $team->open_count }}</a></td>
+                                        <td class="text-end">{{ $team->created_count }}</td>
+                                        <td class="text-end">{{ $team->resolved_count }}</td>
+                                        <td class="text-end">@if ($team->breached_count > 0)<span class="text-red">{{ $team->breached_count }}</span>@else 0 @endif</td>
+                                        <td class="text-end">{{ $team->avg_resolution_hours !== null ? __(':hours h', ['hours' => $team->avg_resolution_hours]) : '—' }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        @endif
+
         <div class="col-lg-8">
             <div class="card">
                 <div class="card-header"><h3 class="card-title">{{ __('Agent performance') }}</h3></div>
@@ -129,7 +165,7 @@
 
     @php
         $chartData = [
-            'volume' => $dailyVolume,
+            'volume' => [...$dailyVolume, 'labels' => array_map(fn ($day) => Illuminate\Support\Carbon::parse($day)->translatedFormat('j M'), $dailyVolume['labels'])],
             'priority' => $byPriority,
             'category' => $byCategory->map(fn ($row) => ['name' => __($row->name), 'total' => $row->total]),
             'labels' => ['created' => __('Created'), 'resolved' => __('Resolved'), 'tickets' => __('Tickets')],

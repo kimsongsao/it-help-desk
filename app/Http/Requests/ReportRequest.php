@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Support\DisplayTimezone;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -31,21 +32,37 @@ class ReportRequest extends FormRequest
     }
 
     /**
-     * Get the start of the reporting period. Defaults to 30 days ago.
+     * Get the start of the reporting period (the viewer's local midnight, in UTC). Defaults to 30 days ago.
      */
     public function from(): CarbonImmutable
     {
-        $to = $this->to();
-        $from = $this->date('from')?->toImmutable()->startOfDay() ?? $to->subDays(29)->startOfDay();
+        $to = $this->to()->setTimezone($this->timezone());
+        $from = $this->localDate('from')?->startOfDay() ?? $to->subDays(29)->startOfDay();
 
-        return $from->max($to->subDays(365)->startOfDay());
+        return $from->max($to->subDays(365)->startOfDay())->utc();
     }
 
     /**
-     * Get the end of the reporting period. Defaults to today.
+     * Get the end of the reporting period (the end of the viewer's local day, in UTC). Defaults to today.
      */
     public function to(): CarbonImmutable
     {
-        return ($this->date('to')?->toImmutable() ?? CarbonImmutable::now())->endOfDay();
+        return ($this->localDate('to') ?? CarbonImmutable::now($this->timezone()))->endOfDay()->utc();
+    }
+
+    /**
+     * Get the time zone the report's days are counted in.
+     */
+    public function timezone(): string
+    {
+        return app(DisplayTimezone::class)->get();
+    }
+
+    /**
+     * Read a date input as a day in the viewer's time zone.
+     */
+    private function localDate(string $key): ?CarbonImmutable
+    {
+        return $this->filled($key) ? CarbonImmutable::createFromFormat('Y-m-d', $this->input($key), $this->timezone()) : null;
     }
 }

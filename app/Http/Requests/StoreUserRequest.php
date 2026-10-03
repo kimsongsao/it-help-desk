@@ -58,7 +58,7 @@ class StoreUserRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique('users', 'email')->ignore($this->route('user'))],
-            'department' => ['nullable', 'string', 'max:100'],
+            'department_id' => ['nullable', 'integer', app(Tenancy::class)->exists('departments')],
             'role_id' => ['required', 'integer', app(Tenancy::class)->exists('roles')],
             'is_active' => ['boolean'],
             'password' => [$this->route('user') ? 'nullable' : 'required', Password::defaults()],

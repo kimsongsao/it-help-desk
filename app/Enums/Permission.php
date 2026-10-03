@@ -16,6 +16,7 @@ enum Permission: string
     case SlaManage = 'sla.manage';
     case WorkflowsManage = 'workflows.manage';
     case CategoriesManage = 'categories.manage';
+    case TeamsManage = 'teams.manage';
     case UsersManage = 'users.manage';
     case RolesManage = 'roles.manage';
     case OrganizationManage = 'organization.manage';
@@ -39,6 +40,7 @@ enum Permission: string
             self::SlaManage => 'Manage SLA policies',
             self::WorkflowsManage => 'Manage workflows',
             self::CategoriesManage => 'Manage categories',
+            self::TeamsManage => 'Manage teams',
             self::UsersManage => 'Manage users',
             self::RolesManage => 'Manage roles and permissions',
             self::OrganizationManage => 'Manage organization settings',
@@ -53,7 +55,7 @@ enum Permission: string
     {
         return match ($this) {
             self::ReportsView => 'Reports',
-            self::SlaManage, self::WorkflowsManage, self::CategoriesManage => 'Configuration',
+            self::SlaManage, self::WorkflowsManage, self::CategoriesManage, self::TeamsManage => 'Configuration',
             self::UsersManage, self::RolesManage, self::OrganizationManage, self::ApiAccess => 'Administration',
             default => 'Tickets',
         };
@@ -68,6 +70,7 @@ enum Permission: string
             self::ReportsView => Feature::Reports,
             self::SlaManage, self::TicketsEscalate => Feature::SlaManagement,
             self::WorkflowsManage => Feature::Workflows,
+            self::TeamsManage => Feature::Teams,
             self::ApiAccess => Feature::Api,
             default => null,
         };

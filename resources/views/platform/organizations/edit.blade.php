@@ -1,7 +1,7 @@
 <x-layouts.app :title="$organization->name">
     <x-slot:header>
         <x-page-header :pretitle="__('Platform')" :title="$organization->name">
-            <div class="text-secondary mt-1">{{ $organization->slug }} · {{ __('Created :date', ['date' => $organization->created_at->translatedFormat('j M Y')]) }}</div>
+            <div class="text-secondary mt-1">{{ $organization->slug }} · {{ __('Created :date', ['date' => $organization->created_at->forViewer()->translatedFormat('j M Y')]) }}</div>
         </x-page-header>
     </x-slot:header>
 

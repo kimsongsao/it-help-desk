@@ -23,8 +23,14 @@
                             <x-field-error name="email" />
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label class="form-label" for="department">{{ __('Department') }}</label>
-                            <input id="department" name="department" type="text" value="{{ old('department', $user->department) }}" class="form-control">
+                            <label class="form-label" for="department_id">{{ __('Department') }}</label>
+<select id="department_id" name="department_id" @class(['form-select', 'is-invalid' => $errors->has('department_id')])>
+                                <option value="">{{ __('No department') }}</option>
+                                @foreach ($departments as $department)
+                                    <option value="{{ $department->id }}" @selected((int) old('department_id', $user->department_id) === $department->id)>{{ $department->name }}</option>
+                                @endforeach
+                            </select>
+                            <x-field-error name="department_id" />
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label required" for="role_id">{{ __('Role') }}</label>

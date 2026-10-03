@@ -4,6 +4,7 @@
 
     <form method="POST" action="{{ route('register') }}" novalidate>
         @csrf
+        <input type="hidden" name="timezone" data-browser-timezone>
 
         <div class="mb-3">
             <label class="form-label required" for="company_name">{{ __('Company or team name') }}</label>

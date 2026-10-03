@@ -30,6 +30,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Default Time Zone
+    |--------------------------------------------------------------------------
+    |
+    | Every date is stored in UTC. New organizations show dates and read their
+    | business hours in this time zone until they choose another one.
+    |
+    */
+
+    'default_timezone' => env('HELPDESK_TIMEZONE', 'Asia/Phnom_Penh'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Public Email Domains
     |--------------------------------------------------------------------------
     |

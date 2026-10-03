@@ -14,6 +14,7 @@
                     <tr>
                         <th>{{ __('Name') }}</th>
                         <th>{{ __('Description') }}</th>
+                        <th>{{ __('Team') }}</th>
                         <th>{{ __('Tickets') }}</th>
                         <th class="w-1"></th>
                     </tr>
@@ -23,6 +24,7 @@
                         <tr>
                             <td class="fw-medium"><i class="ti {{ $category->icon ?? 'ti-help-circle' }} text-primary me-2"></i>{{ __($category->name) }}</td>
                             <td class="text-secondary">{{ __((string) $category->description) }}</td>
+                            <td>@if ($category->defaultTeam)<span class="badge bg-{{ $category->defaultTeam->color }}-lt">{{ $category->defaultTeam->name }}</span>@else<span class="text-secondary">—</span>@endif</td>
                             <td>{{ $category->tickets_count }}</td>
                             <td>
                                 <div class="btn-list flex-nowrap">
@@ -36,7 +38,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="4" class="text-center text-secondary py-4">{{ __('No categories yet.') }}</td></tr>
+                        <tr><td colspan="5" class="text-center text-secondary py-4">{{ __('No categories yet.') }}</td></tr>
                     @endforelse
                 </tbody>
             </table>

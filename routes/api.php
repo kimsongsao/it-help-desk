@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\V1\AuthTokenController;
 use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\ReportController;
+use App\Http\Controllers\Api\V1\TeamController;
 use App\Http\Controllers\Api\V1\TicketActivityController;
 use App\Http\Controllers\Api\V1\TicketCommentController;
 use App\Http\Controllers\Api\V1\TicketController;
@@ -26,6 +27,7 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         Route::get('/attachments/{attachment}', [TicketAttachmentController::class, 'show'])->name('attachments.show');
 
         Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
+        Route::get('/teams', [TeamController::class, 'index'])->middleware('feature:teams')->name('teams.index');
         Route::get('/reports/summary', [ReportController::class, 'show'])->middleware('can:reports.view')->name('reports.summary');
     });
 });

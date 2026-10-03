@@ -29,8 +29,9 @@ class JoinOrganizationRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique('users', 'email')],
-            'department' => ['nullable', 'string', 'max:100'],
+            'department_id' => ['nullable', 'integer', Rule::exists('departments', 'id')->where('organization_id', $this->route('organization')->id)],
             'password' => ['required', 'confirmed', Password::defaults()],
+            'timezone' => ['nullable', 'timezone:all'],
         ];
     }
 

@@ -4,15 +4,18 @@ namespace App\Http\Controllers;
 
 use App\Actions\Tickets\CreateTicket;
 use App\Actions\Tickets\UpdateTicket;
+use App\Enums\Feature;
 use App\Http\Requests\ListTicketsRequest;
 use App\Http\Requests\StoreTicketRequest;
 use App\Http\Requests\UpdateTicketRequest;
 use App\Models\Category;
+use App\Models\Team;
 use App\Models\Ticket;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 
@@ -27,7 +30,7 @@ class TicketController extends Controller
 
         $tickets = Ticket::visibleTo($request->user())
             ->filter($filters, $request->user())
-            ->with(['requester', 'assignee', 'category'])
+            ->with(['requester', 'assignee', 'category', 'team'])
             ->latest()
             ->paginate(15)
             ->withQueryString();
@@ -44,6 +47,7 @@ class TicketController extends Controller
             'statusCounts' => $statusCounts,
             'filters' => $filters,
             'categories' => Category::orderBy('name')->get(),
+            'teams' => $this->teamsFor($request->user()),
         ]);
     }
 
@@ -81,7 +85,7 @@ class TicketController extends Controller
         $user = $request->user();
         $canSeeInternal = $user->can('commentInternal', $ticket);
 
-        $ticket->load(['requester', 'assignee', 'category', 'slaPolicy', 'ticketAttachments', 'escalations.escalatedBy', 'escalations.escalatedTo']);
+        $ticket->load(['requester.department', 'assignee', 'category', 'team', 'slaPolicy', 'ticketAttachments', 'escalations.escalatedBy', 'escalations.escalatedTo']);
 
         $comments = $ticket->comments()
             ->with(['author', 'attachments'])
@@ -101,7 +105,8 @@ class TicketController extends Controller
             'activities' => $activities,
             'canSeeInternal' => $canSeeInternal,
             'categories' => $user->can('update', $ticket) ? Category::orderBy('name')->get() : collect(),
-            'agents' => $needsAgents ? User::assignable()->orderBy('name')->get() : collect(),
+            'agents' => $needsAgents ? User::assignable()->with('teams')->orderBy('name')->get() : collect(),
+            'teams' => $user->can('assign', $ticket) ? $this->teamsFor($user) : collect(),
         ]);
     }
 
@@ -114,6 +119,18 @@ class TicketController extends Controller
 
         return redirect()->route('tickets.show', $ticket)
             ->with('status', __('Ticket updated.'));
+    }
+
+    /**
+     * Get the teams the user can filter or route by, when the organization's plan includes teams.
+     *
+     * @return Collection<int, Team>
+     */
+    private function teamsFor(User $user): Collection
+    {
+        return $user->isStaff() && $user->organization->hasFeature(Feature::Teams)
+            ? Team::orderBy('name')->get()
+            : collect();
     }
 
     /**

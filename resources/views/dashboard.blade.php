@@ -2,7 +2,7 @@
 
 <x-layouts.app :title="__('Home')">
     <x-slot:header>
-        <x-page-header :pretitle="now()->translatedFormat('l, j F Y')" :title="__('Hello, :name', ['name' => str($user->name)->before(' ')])">
+        <x-page-header :pretitle="now()->forViewer()->translatedFormat('l, j F Y')" :title="__('Hello, :name', ['name' => str($user->name)->before(' ')])">
             <div class="text-secondary mt-1">
                 {{ $user->isStaff() ? __("Here's what needs your attention today.") : __('How can we help you today?') }}
             </div>
@@ -83,6 +83,23 @@
                 </div>
             @endforeach
         </div>
+
+        @if ($isInTeam && $user->organization->hasFeature(App\Enums\Feature::Teams))
+            <div class="card mt-3">
+                <div class="card-header">
+                    <div>
+                        <h3 class="card-title">{{ __('Team queue') }}</h3>
+                        <div class="card-subtitle">{{ __('Unassigned tickets waiting in your teams') }}</div>
+                    </div>
+                    <div class="card-actions"><a href="{{ route('tickets.index', ['team' => 'mine', 'assignee' => 'unassigned']) }}" class="btn btn-sm">{{ __('View all') }}</a></div>
+                </div>
+                <x-ticket-table :tickets="$teamQueue">
+                    <x-slot:empty>
+                        <x-empty-state icon="ti-circle-check" :title="__('Nothing waiting')" :subtitle="__('Every ticket in your teams has an owner.')" />
+                    </x-slot:empty>
+                </x-ticket-table>
+            </div>
+        @endif
 
         <div class="card mt-3">
             <div class="card-header">

@@ -6,11 +6,14 @@ use App\Enums\TicketActivityType;
 use App\Enums\TicketPriority;
 use App\Enums\TicketStatus;
 use App\Models\Category;
+use App\Models\Team;
 use App\Models\Ticket;
 use App\Models\User;
 use App\Notifications\TicketAssigned;
+use App\Notifications\TicketRoutedToTeam;
 use App\Services\Sla\SlaManager;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Notification;
 
 class TicketUpdater
 {
@@ -19,7 +22,7 @@ class TicketUpdater
      *
      * @var list<string>
      */
-    private const array Attributes = ['status', 'priority', 'category_id', 'assignee_id'];
+    private const array Attributes = ['status', 'priority', 'category_id', 'assignee_id', 'team_id'];
 
     public function __construct(private SlaManager $sla) {}
 
@@ -28,7 +31,7 @@ class TicketUpdater
      *
      * This does not run workflows, so it is safe to call from workflow actions.
      *
-     * @param  array{status?: TicketStatus|string, priority?: TicketPriority|string, category_id?: int|string|null, assignee_id?: int|string|null}  $changes
+     * @param  array{status?: TicketStatus|string, priority?: TicketPriority|string, category_id?: int|string|null, assignee_id?: int|string|null, team_id?: int|string|null}  $changes
      * @return list<string> The attributes that changed.
      */
     public function apply(Ticket $ticket, array $changes, ?User $actor): array
@@ -38,6 +41,7 @@ class TicketUpdater
             'priority' => $ticket->priority,
             'category_id' => $ticket->category_id,
             'assignee_id' => $ticket->assignee_id,
+            'team_id' => $ticket->team_id,
         ];
 
         $ticket->fill(Arr::only($changes, self::Attributes));
@@ -62,6 +66,13 @@ class TicketUpdater
 
         if (in_array('assignee_id', $changed, true) && $ticket->assignee !== null && ! $ticket->assignee->is($actor)) {
             $ticket->assignee->notify(new TicketAssigned($ticket, $actor));
+        }
+
+        if (in_array('team_id', $changed, true) && $ticket->team !== null && $ticket->assignee_id === null) {
+            Notification::send(
+                $ticket->team->members()->where('is_active', true)->get()->reject(fn (User $member): bool => $member->is($actor)),
+                new TicketRoutedToTeam($ticket),
+            );
         }
 
         return $changed;
@@ -95,7 +106,7 @@ class TicketUpdater
      */
     private function recordActivities(Ticket $ticket, array $changed, array $original, ?User $actor): void
     {
-        $ticket->load(['category', 'assignee']);
+        $ticket->load(['category', 'assignee', 'team']);
 
         foreach ($changed as $attribute) {
             [$type, $description, $replace] = match ($attribute) {
@@ -111,6 +122,9 @@ class TicketUpdater
                     'from' => Category::find($original['category_id'])?->name ?? 'none',
                     'to' => $ticket->category?->name ?? 'none',
                 ]],
+                'team_id' => $ticket->team
+                    ? [TicketActivityType::TeamChanged, 'Routed to the :team team', ['team' => $ticket->team->name]]
+                    : [TicketActivityType::TeamChanged, 'Removed from the :team team', ['team' => Team::find($original['team_id'])?->name ?? 'none']],
                 'assignee_id' => $ticket->assignee
                     ? [TicketActivityType::Assigned, 'Assigned to :name', ['name' => $ticket->assignee->name]]
                     : [TicketActivityType::Assigned, 'Unassigned', []],

@@ -8,6 +8,7 @@ enum WorkflowField: string
     case Priority = 'priority';
     case Category = 'category_id';
     case Assignee = 'assignee_id';
+    case Team = 'team_id';
     case Subject = 'subject';
     case Description = 'description';
     case RequesterDepartment = 'requester_department';
@@ -23,6 +24,7 @@ enum WorkflowField: string
             self::Priority => 'Priority',
             self::Category => 'Category',
             self::Assignee => 'Assignee',
+            self::Team => 'Team',
             self::Subject => 'Subject',
             self::Description => 'Description',
             self::RequesterDepartment => 'Requester department',

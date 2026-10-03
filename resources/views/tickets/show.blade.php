@@ -81,7 +81,7 @@
                         <x-avatar :user="$ticket->requester" class="me-2" />
                         <div>
                             <div class="fw-medium">{{ $ticket->requester->name }}</div>
-                            <div class="text-secondary small" title="{{ $ticket->created_at->translatedFormat('j M Y, H:i') }}">{{ __('opened :time', ['time' => $ticket->created_at->diffForHumans()]) }}</div>
+                            <div class="text-secondary small" title="{{ $ticket->created_at->forViewer()->translatedFormat('j M Y, H:i') }}">{{ __('opened :time', ['time' => $ticket->created_at->diffForHumans()]) }}</div>
                         </div>
                     </div>
                     @if (filled($ticket->description))
@@ -120,7 +120,7 @@
                                             @if ($comment->is_internal)
                                                 <span class="badge bg-yellow text-yellow-fg"><i class="ti ti-lock"></i> {{ __('Internal note') }}</span>
                                             @endif
-                                            <span class="text-secondary small ms-auto" title="{{ $comment->created_at->translatedFormat('j M Y, H:i') }}">{{ $comment->created_at->diffForHumans() }}</span>
+                                            <span class="text-secondary small ms-auto" title="{{ $comment->created_at->forViewer()->translatedFormat('j M Y, H:i') }}">{{ $comment->created_at->diffForHumans() }}</span>
                                         </div>
                                         @if (filled($comment->body))
                                             <div class="ticket-body">{{ $comment->body }}</div>
@@ -160,7 +160,7 @@
                                             <div class="timeline-event-icon bg-{{ $activity->type->color() }}-lt"><i class="ti {{ $activity->type->icon() }}"></i></div>
                                             <div class="card timeline-event-card">
                                                 <div class="card-body py-2">
-                                                    <div class="text-secondary float-end small" title="{{ $activity->created_at->translatedFormat('j M Y, H:i') }}">{{ $activity->created_at->diffForHumans() }}</div>
+                                                    <div class="text-secondary float-end small" title="{{ $activity->created_at->forViewer()->translatedFormat('j M Y, H:i') }}">{{ $activity->created_at->diffForHumans() }}</div>
                                                     <div>{{ $activity->message() }}</div>
                                                     <div class="text-secondary small">{{ $activity->user?->name ?? __('System') }}</div>
                                                 </div>
@@ -184,7 +184,7 @@
                             <div class="datagrid-title">{{ __('Requester') }}</div>
                             <div class="datagrid-content d-flex align-items-center gap-2">
                                 <x-avatar :user="$ticket->requester" size="xs" />
-                                <div>{{ $ticket->requester->name }}@if ($ticket->requester->department)<div class="text-secondary small">{{ $ticket->requester->department }}</div>@endif</div>
+                                <div>{{ $ticket->requester->name }}@if ($ticket->requester->department)<div class="text-secondary small">{{ $ticket->requester->department->name }}</div>@endif</div>
                             </div>
                         </div>
                         <div class="datagrid-item">
@@ -197,9 +197,15 @@
                                 @endif
                             </div>
                         </div>
+                        @if ($ticket->team)
+                            <div class="datagrid-item">
+                                <div class="datagrid-title">{{ __('Team') }}</div>
+                                <div class="datagrid-content"><span class="badge bg-{{ $ticket->team->color }}-lt"><i class="ti ti-users-group"></i> {{ $ticket->team->name }}</span></div>
+                            </div>
+                        @endif
                         <div class="datagrid-item">
                             <div class="datagrid-title">{{ __('Created') }}</div>
-                            <div class="datagrid-content">{{ $ticket->created_at->translatedFormat('j M Y, H:i') }}</div>
+                            <div class="datagrid-content">{{ $ticket->created_at->forViewer()->translatedFormat('j M Y, H:i') }}</div>
                         </div>
                         <div class="datagrid-item">
                             <div class="datagrid-title">{{ __('Last update') }}</div>
@@ -208,7 +214,7 @@
                         @if ($ticket->resolved_at)
                             <div class="datagrid-item">
                                 <div class="datagrid-title">{{ __('Resolved') }}</div>
-                                <div class="datagrid-content">{{ $ticket->resolved_at->translatedFormat('j M Y, H:i') }}</div>
+                                <div class="datagrid-content">{{ $ticket->resolved_at->forViewer()->translatedFormat('j M Y, H:i') }}</div>
                             </div>
                         @endif
                     </div>
@@ -234,8 +240,8 @@
                                     <x-sla-badge :status="$ticket->firstResponseSlaStatus()" :due="$ticket->first_response_due_at" />
                                 </div>
                                 <div class="text-secondary small">
-                                    {{ __('Due :date', ['date' => $ticket->first_response_due_at->translatedFormat('j M, H:i')]) }}
-                                    @if ($ticket->first_responded_at) · {{ __('responded :date', ['date' => $ticket->first_responded_at->translatedFormat('j M, H:i')]) }} @endif
+                                    {{ __('Due :date', ['date' => $ticket->first_response_due_at->forViewer()->translatedFormat('j M, H:i')]) }}
+                                    @if ($ticket->first_responded_at) · {{ __('responded :date', ['date' => $ticket->first_responded_at->forViewer()->translatedFormat('j M, H:i')]) }} @endif
                                 </div>
                             </div>
                             <div>
@@ -243,7 +249,7 @@
                                     <span>{{ __('Resolution') }}</span>
                                     <x-sla-badge :status="$ticket->resolutionSlaStatus()" :due="$ticket->resolution_due_at" />
                                 </div>
-                                <div class="text-secondary small">{{ __('Due :date', ['date' => $ticket->resolution_due_at->translatedFormat('j M, H:i')]) }}</div>
+                                <div class="text-secondary small">{{ __('Due :date', ['date' => $ticket->resolution_due_at->forViewer()->translatedFormat('j M, H:i')]) }}</div>
                             </div>
                         @else
                             <div class="text-secondary">{{ __('No SLA policy applies to this ticket.') }}</div>
@@ -286,13 +292,24 @@
                                 </select>
                             </div>
                         @endif
+                        @if ($canAssign && $teams->isNotEmpty())
+                            <div class="mb-3">
+                                <label class="form-label" for="team_id">{{ __('Team') }}</label>
+                                <select id="team_id" name="team_id" class="form-select">
+                                    <option value="">{{ __('No team') }}</option>
+                                    @foreach ($teams as $team)
+                                        <option value="{{ $team->id }}" @selected($ticket->team_id === $team->id)>{{ $team->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        @endif
                         @if ($canAssign)
                             <div>
                                 <label class="form-label" for="assignee_id">{{ __('Assignee') }}</label>
                                 <select id="assignee_id" name="assignee_id" class="form-select">
                                     <option value="">{{ __('Unassigned') }}</option>
                                     @foreach ($agents as $agent)
-                                        <option value="{{ $agent->id }}" @selected($ticket->assignee_id === $agent->id)>{{ $agent->name }}{{ $agent->is($user) ? ' ('.__('me').')' : '' }}</option>
+                                        <option value="{{ $agent->id }}" @selected($ticket->assignee_id === $agent->id)>{{ $agent->name }}{{ $agent->is($user) ? ' ('.__('me').')' : '' }}{{ $ticket->team_id && $agent->teams->contains('id', $ticket->team_id) ? ' · '.$ticket->team->name : '' }}</option>
                                     @endforeach
                                 </select>
                             </div>

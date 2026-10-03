@@ -15,13 +15,15 @@ class BusinessHoursCalculator
 
     /**
      * Calculate when a target of the given number of minutes falls due under the policy's calendar.
+     *
+     * Business hours and working days are read in the given time zone (the organization's); the result is UTC.
      */
-    public function dueAt(CarbonInterface $start, int $minutes, SlaPolicy $policy): CarbonImmutable
+    public function dueAt(CarbonInterface $start, int $minutes, SlaPolicy $policy, string $timezone = 'UTC'): CarbonImmutable
     {
-        $start = CarbonImmutable::instance($start);
+        $start = CarbonImmutable::instance($start)->setTimezone($timezone);
 
         if (! $this->usesBusinessHours($policy)) {
-            return $start->addMinutes($minutes);
+            return $start->addMinutes($minutes)->utc();
         }
 
         $cursor = $start;
@@ -36,7 +38,7 @@ class BusinessHoursCalculator
                 $available = (int) $cursor->diffInMinutes($dayEnd);
 
                 if ($remaining <= $available) {
-                    return $cursor->addMinutes($remaining);
+                    return $cursor->addMinutes($remaining)->utc();
                 }
 
                 $remaining -= $available;
@@ -45,7 +47,7 @@ class BusinessHoursCalculator
             $cursor = $cursor->addDay()->setTimeFromTimeString($policy->business_hours_start);
         }
 
-        return $start->addMinutes($minutes);
+        return $start->addMinutes($minutes)->utc();
     }
 
     /**

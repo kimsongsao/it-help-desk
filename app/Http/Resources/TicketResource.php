@@ -29,6 +29,7 @@ class TicketResource extends JsonResource
             'attachments' => TicketAttachmentResource::collection($this->whenLoaded('ticketAttachments')),
             'requester' => UserResource::make($this->whenLoaded('requester')),
             'assignee' => UserResource::make($this->whenLoaded('assignee')),
+            'team' => $this->whenLoaded('team', fn () => $this->team ? ['id' => $this->team->id, 'name' => $this->team->name] : null),
             'sla' => [
                 'policy' => $this->whenLoaded('slaPolicy', fn () => $this->slaPolicy?->name),
                 'first_response_due_at' => $this->first_response_due_at,

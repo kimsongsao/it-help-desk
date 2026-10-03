@@ -93,6 +93,7 @@
                                 </div>
                             </a>
                             <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
+                                <a href="{{ route('profile.edit') }}" class="dropdown-item"><i class="ti ti-user-circle icon dropdown-item-icon"></i> {{ __('My profile') }}</a>
                                 <a href="{{ route('notifications.index') }}" class="dropdown-item"><i class="ti ti-bell icon dropdown-item-icon"></i> {{ __('Notifications') }}</a>
                                 @can('api.access')
                                     <a href="{{ route('api-tokens.index') }}" class="dropdown-item"><i class="ti ti-key icon dropdown-item-icon"></i> {{ __('API tokens') }}</a>
@@ -133,8 +134,8 @@
                                         </a>
                                     </li>
                                 @endcan
-                                @canany(['sla.manage', 'workflows.manage', 'categories.manage'])
-                                    <li @class(['nav-item dropdown', 'active' => request()->routeIs('sla-policies.*', 'workflows.*', 'categories.*')])>
+                                @canany(['sla.manage', 'workflows.manage', 'categories.manage', 'teams.manage'])
+                                    <li @class(['nav-item dropdown', 'active' => request()->routeIs('sla-policies.*', 'workflows.*', 'categories.*', 'teams.*')])>
                                         <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" data-bs-auto-close="outside" role="button" aria-expanded="false">
                                             <span class="nav-link-icon"><i class="ti ti-adjustments icon"></i></span>
                                             <span class="nav-link-title">{{ __('Configuration') }}</span>
@@ -149,11 +150,14 @@
                                             @can('categories.manage')
                                                 <a class="dropdown-item" href="{{ route('categories.index') }}"><i class="ti ti-category icon dropdown-item-icon"></i> {{ __('Categories') }}</a>
                                             @endcan
+                                            @can('teams.manage')
+                                                <a class="dropdown-item" href="{{ route('teams.index') }}"><i class="ti ti-users-group icon dropdown-item-icon"></i> {{ __('Teams') }}</a>
+                                            @endcan
                                         </div>
                                     </li>
                                 @endcanany
                                 @canany(['users.manage', 'roles.manage', 'organization.manage'])
-                                    <li @class(['nav-item dropdown', 'active' => request()->routeIs('users.*', 'roles.*', 'organization.*')])>
+                                    <li @class(['nav-item dropdown', 'active' => request()->routeIs('users.*', 'roles.*', 'organization.*', 'departments.*')])>
                                         <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" data-bs-auto-close="outside" role="button" aria-expanded="false">
                                             <span class="nav-link-icon"><i class="ti ti-shield-lock icon"></i></span>
                                             <span class="nav-link-title">{{ __('Administration') }}</span>
@@ -161,6 +165,7 @@
                                         <div class="dropdown-menu">
                                             @can('users.manage')
                                                 <a class="dropdown-item" href="{{ route('users.index') }}"><i class="ti ti-users icon dropdown-item-icon"></i> {{ __('Users') }}</a>
+                                                <a class="dropdown-item" href="{{ route('departments.index') }}"><i class="ti ti-building-community icon dropdown-item-icon"></i> {{ __('Departments') }}</a>
                                             @endcan
                                             @can('roles.manage')
                                                 <a class="dropdown-item" href="{{ route('roles.index') }}"><i class="ti ti-lock-access icon dropdown-item-icon"></i> {{ __('Roles & permissions') }}</a>

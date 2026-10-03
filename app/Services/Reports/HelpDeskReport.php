@@ -4,6 +4,7 @@ namespace App\Services\Reports;
 
 use App\Enums\TicketPriority;
 use App\Enums\TicketStatus;
+use App\Models\Team;
 use App\Models\Ticket;
 use App\Models\TicketEscalation;
 use App\Models\User;
@@ -18,6 +19,7 @@ class HelpDeskReport
         public readonly CarbonImmutable $from,
         public readonly CarbonImmutable $to,
         public readonly int $organizationId,
+        public readonly string $timezone = 'UTC',
     ) {}
 
     /**
@@ -66,13 +68,23 @@ class HelpDeskReport
      */
     public function dailyVolume(): array
     {
+        // Timestamps are stored in UTC; count them on the local calendar day of the report's time zone.
         $rows = DB::select(<<<'SQL'
             select day::date as day,
-                (select count(*) from tickets where organization_id = ? and created_at >= day and created_at < day + interval '1 day') as created,
-                (select count(*) from tickets where organization_id = ? and resolved_at >= day and resolved_at < day + interval '1 day') as resolved
+                (select count(*) from tickets where organization_id = ?
+                    and (created_at at time zone 'UTC' at time zone ?) >= day
+                    and (created_at at time zone 'UTC' at time zone ?) < day + interval '1 day') as created,
+                (select count(*) from tickets where organization_id = ?
+                    and (resolved_at at time zone 'UTC' at time zone ?) >= day
+                    and (resolved_at at time zone 'UTC' at time zone ?) < day + interval '1 day') as resolved
             from generate_series(?::date, ?::date, interval '1 day') as day
             order by day
-            SQL, [$this->organizationId, $this->organizationId, $this->from->toDateString(), $this->to->toDateString()]);
+            SQL, [
+            $this->organizationId, $this->timezone, $this->timezone,
+            $this->organizationId, $this->timezone, $this->timezone,
+            $this->from->setTimezone($this->timezone)->toDateString(),
+            $this->to->setTimezone($this->timezone)->toDateString(),
+        ]);
 
         return [
             'labels' => array_map(fn (object $row): string => $row->day, $rows),
@@ -159,13 +171,47 @@ class HelpDeskReport
     }
 
     /**
+     * Get the workload and performance of every support team.
+     *
+     * @return Collection<int, Team>
+     */
+    public function teamPerformance(): Collection
+    {
+        $averageHours = $this->resolvedInPeriod()
+            ->whereNotNull('team_id')
+            ->toBase()
+            ->selectRaw('team_id, avg(extract(epoch from (resolved_at - created_at))) / 3600 as hours')
+            ->groupBy('team_id')
+            ->pluck('hours', 'team_id');
+
+        return Team::query()
+            ->where('organization_id', $this->organizationId)
+            ->withCount([
+                'members',
+                'tickets as open_count' => fn (Builder $query) => $query->active(),
+                'tickets as created_count' => fn (Builder $query) => $query->whereBetween('created_at', [$this->from, $this->to]),
+                'tickets as resolved_count' => fn (Builder $query) => $query->whereBetween('resolved_at', [$this->from, $this->to]),
+                'tickets as breached_count' => fn (Builder $query) => $query
+                    ->whereBetween('created_at', [$this->from, $this->to])
+                    ->where(fn (Builder $query) => $query
+                        ->whereNotNull('first_response_breached_at')
+                        ->orWhereNotNull('resolution_breached_at')
+                        ->orWhereColumn('first_responded_at', '>', 'first_response_due_at')
+                        ->orWhereColumn('resolved_at', '>', 'resolution_due_at')),
+            ])
+            ->orderBy('name')
+            ->get()
+            ->each(fn (Team $team) => $team->setAttribute('avg_resolution_hours', isset($averageHours[$team->id]) ? round((float) $averageHours[$team->id], 1) : null));
+    }
+
+    /**
      * Get the tickets created in the period with the relations needed for an export.
      *
      * @return Builder<Ticket>
      */
     public function ticketsForExport(): Builder
     {
-        return $this->createdInPeriod()->with(['requester', 'assignee', 'category'])->orderBy('id');
+        return $this->createdInPeriod()->with(['requester.department', 'assignee', 'category', 'team'])->orderBy('id');
     }
 
     /**

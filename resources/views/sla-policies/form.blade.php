@@ -96,7 +96,7 @@
                                 <x-field-error name="business_days" />
                             </div>
                         </div>
-                        <div class="form-hint">Business hours use the application timezone ({{ config('app.timezone') }}).</div>
+                        <div class="form-hint">{{ __('Business hours are counted in your organization\'s time zone (:timezone).', ['timezone' => auth()->user()->organization->timezone]) }}</div>
                     </div>
                 </div>
             </div>

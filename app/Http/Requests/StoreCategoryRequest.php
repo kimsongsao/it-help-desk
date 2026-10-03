@@ -28,6 +28,7 @@ class StoreCategoryRequest extends FormRequest
             'name' => ['required', 'string', 'max:100', app(Tenancy::class)->unique('categories', 'name')],
             'description' => ['nullable', 'string', 'max:255'],
             'icon' => ['nullable', 'string', 'regex:/^ti-[a-z0-9-]+$/', 'max:50'],
+            'default_team_id' => ['nullable', 'integer', app(Tenancy::class)->exists('teams')],
         ];
     }
 }

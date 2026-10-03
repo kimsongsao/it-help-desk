@@ -32,7 +32,7 @@
                 <thead>
                     <tr>
                         <th>{{ __('User') }}</th>
-                        <th>{{ __('Department') }}</th>
+                        <th>{{ __('Department') }} / {{ __('Teams') }}</th>
                         <th>{{ __('Role') }}</th>
                         <th>{{ __('Status') }}</th>
                         <th class="text-end">{{ __('Submitted') }}</th>
@@ -52,7 +52,12 @@
                                     </div>
                                 </div>
                             </td>
-                            <td class="text-secondary">{{ $user->department ?? '—' }}</td>
+                            <td class="text-secondary">
+                                {{ $user->department?->name ?? '—' }}
+                                @foreach ($user->teams as $team)
+                                    <span class="badge bg-{{ $team->color }}-lt ms-1">{{ $team->name }}</span>
+                                @endforeach
+                            </td>
                             <td><span class="badge bg-blue-lt">{{ __($user->role->name) }}</span></td>
                             <td>
                                 @if ($user->is_active)

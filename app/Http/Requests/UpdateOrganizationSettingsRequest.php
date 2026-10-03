@@ -44,6 +44,7 @@ class UpdateOrganizationSettingsRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'default_locale' => ['required', Rule::in(array_keys(config('helpdesk.locales')))],
+            'timezone' => ['required', 'timezone:all'],
             'allow_self_registration' => ['boolean'],
             'allowed_email_domains' => ['array', 'max:20'],
             'allowed_email_domains.*' => ['string', 'max:255', 'regex:/^(?!-)[a-z0-9-]+(\.[a-z0-9-]+)+$/', Rule::notIn(config('helpdesk.public_email_domains'))],

@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Support\DisplayTimezone;
 use App\Support\Tenancy;
 use Closure;
 use Illuminate\Http\Request;
@@ -10,7 +11,10 @@ use Symfony\Component\HttpFoundation\Response;
 
 class IdentifyOrganization
 {
-    public function __construct(private Tenancy $tenancy) {}
+    public function __construct(
+        private Tenancy $tenancy,
+        private DisplayTimezone $displayTimezone,
+    ) {}
 
     /**
      * Make the signed in user's organization current, and sign out members of suspended organizations.
@@ -40,6 +44,7 @@ class IdentifyOrganization
         }
 
         $this->tenancy->set($organization);
+        $this->displayTimezone->useFor($user);
 
         return $next($request);
     }

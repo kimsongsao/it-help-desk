@@ -7,6 +7,7 @@ use App\Enums\TicketStatus;
 use App\Http\Requests\StoreWorkflowRequest;
 use App\Http\Requests\UpdateWorkflowRequest;
 use App\Models\Category;
+use App\Models\Team;
 use App\Models\User;
 use App\Models\Workflow;
 use Illuminate\Http\RedirectResponse;
@@ -89,6 +90,7 @@ class WorkflowController extends Controller
                 'priority' => array_map(fn (TicketPriority $priority) => $option($priority->value, $priority->label()), TicketPriority::cases()),
                 'category' => Category::orderBy('name')->get()->map(fn (Category $category) => $option($category->id, $category->name))->all(),
                 'user' => User::assignable()->orderBy('name')->get()->map(fn (User $user) => $option($user->id, $user->name))->all(),
+                'team' => Team::orderBy('name')->get()->map(fn (Team $team) => $option($team->id, $team->name))->all(),
             ],
         ]);
     }

@@ -26,9 +26,10 @@ class RegisterController extends Controller
     public function store(RegisterRequest $request, CreateOrganization $createOrganization): RedirectResponse
     {
         $owner = $createOrganization->handle(
-            $request->safe()->except('template'),
+            $request->safe()->except(['template', 'timezone']),
             locale: app()->getLocale(),
             template: HelpDeskTemplate::from($request->validated('template')),
+            timezone: $request->validated('timezone'),
         );
 
         Auth::login($owner);

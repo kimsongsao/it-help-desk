@@ -33,8 +33,9 @@ class SlaManager
         }
 
         $start = CarbonImmutable::instance($ticket->created_at ?? now());
-        $firstResponseDue = $this->calculator->dueAt($start, $policy->first_response_minutes, $policy);
-        $resolutionDue = $this->calculator->dueAt($start, $policy->resolution_minutes, $policy);
+        $timezone = $ticket->organization?->timezone ?? 'UTC';
+        $firstResponseDue = $this->calculator->dueAt($start, $policy->first_response_minutes, $policy, $timezone);
+        $resolutionDue = $this->calculator->dueAt($start, $policy->resolution_minutes, $policy, $timezone);
 
         $ticket->forceFill([
             'first_response_at_risk_at' => $this->atRiskAt($start, $firstResponseDue),

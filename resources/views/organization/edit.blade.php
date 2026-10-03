@@ -29,6 +29,12 @@
                         </select>
                         <div class="form-hint">{{ __('Used for people who have not picked a language yet.') }}</div>
                     </div>
+                    <div class="mb-4">
+                        <label class="form-label" for="timezone">{{ __('Time zone') }}</label>
+                        <x-timezone-select :selected="old('timezone', $organization->timezone)" />
+                        <div class="form-hint">{{ __('Dates are shown in this time zone, and SLA business hours are counted in it.') }}</div>
+                        <x-field-error name="timezone" />
+                    </div>
 
                     <h4 class="mb-2">{{ __('Who can join') }}</h4>
                     <div class="mb-3">

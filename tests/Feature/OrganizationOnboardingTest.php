@@ -8,6 +8,7 @@ test('organization admins can update company settings', function () {
         ->put(route('organization.update'), [
             'name' => 'Acme Cambodia',
             'default_locale' => 'km',
+            'timezone' => 'Asia/Bangkok',
             'allowed_email_domains' => '@Acme.com.kh, acme.com',
             'allow_self_registration' => '1',
         ])
@@ -16,6 +17,7 @@ test('organization admins can update company settings', function () {
     $this->organization->refresh();
     expect($this->organization->name)->toBe('Acme Cambodia')
         ->and($this->organization->default_locale)->toBe('km')
+        ->and($this->organization->timezone)->toBe('Asia/Bangkok')
         ->and($this->organization->allowed_email_domains)->toBe(['acme.com.kh', 'acme.com'])
         ->and($this->organization->allow_self_registration)->toBeTrue();
 });
@@ -23,7 +25,7 @@ test('organization admins can update company settings', function () {
 test('public email providers cannot be used for automatic joining', function () {
     $this->actingAs(User::factory()->admin()->create())
         ->put(route('organization.update'), [
-            'name' => 'Acme', 'default_locale' => 'en', 'allowed_email_domains' => 'gmail.com',
+            'name' => 'Acme', 'default_locale' => 'en', 'timezone' => 'UTC', 'allowed_email_domains' => 'gmail.com',
         ])
         ->assertSessionHasErrors('allowed_email_domains.0');
 });

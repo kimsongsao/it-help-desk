@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\Feature;
 use App\Enums\TicketStatus;
 use App\Models\Category;
 use App\Models\Ticket;
@@ -33,6 +34,16 @@ class DashboardController extends Controller
             ? $user->assignedTickets()->active()->with(['requester', 'assignee', 'category'])->orderBy('resolution_due_at')->limit(8)->get()
             : collect();
 
+        $teamQueue = $user->isStaff() && $user->organization->hasFeature(Feature::Teams)
+            ? Ticket::active()
+                ->whereNull('assignee_id')
+                ->whereIn('team_id', $user->teams()->select('teams.id'))
+                ->with(['requester', 'assignee', 'category', 'team'])
+                ->orderBy('resolution_due_at')
+                ->limit(8)
+                ->get()
+            : collect();
+
         $slaCounts = $user->isStaff() ? [
             'unassigned' => Ticket::visibleTo($user)->active()->whereNull('assignee_id')->count(),
             'breached' => Ticket::visibleTo($user)->slaBreached()->count(),
@@ -51,6 +62,8 @@ class DashboardController extends Controller
             'statusCounts' => $statusCounts,
             'recentTickets' => $recentTickets,
             'myQueue' => $myQueue,
+            'teamQueue' => $teamQueue,
+            'isInTeam' => $user->teams()->exists(),
             'slaCounts' => $slaCounts,
         ]);
     }

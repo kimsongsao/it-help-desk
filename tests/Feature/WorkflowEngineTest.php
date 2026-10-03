@@ -5,6 +5,7 @@ use App\Enums\TicketStatus;
 use App\Enums\WorkflowActionType;
 use App\Enums\WorkflowTrigger;
 use App\Models\Category;
+use App\Models\Department;
 use App\Models\Ticket;
 use App\Models\User;
 use App\Models\Workflow;
@@ -42,7 +43,7 @@ test('all conditions must match unless the workflow matches any', function () {
         ['field' => 'priority', 'operator' => 'equals', 'value' => 'high'],
         ['field' => 'requester_department', 'operator' => 'equals', 'value' => 'finance'],
     ];
-    $requester = User::factory()->create(['department' => 'Sales']);
+    $requester = User::factory()->inDepartment(Department::factory()->create(['name' => 'Sales']))->create();
 
     Workflow::factory()->create(['name' => 'All', 'match_type' => 'all', 'conditions' => $conditions, 'actions' => [['type' => 'add_internal_note', 'value' => 'all matched']]]);
     Workflow::factory()->create(['name' => 'Any', 'match_type' => 'any', 'conditions' => $conditions, 'actions' => [['type' => 'add_internal_note', 'value' => 'any matched']]]);

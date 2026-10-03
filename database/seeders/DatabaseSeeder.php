@@ -11,6 +11,8 @@ use App\Enums\Plan;
 use App\Enums\TicketPriority;
 use App\Enums\TicketStatus;
 use App\Models\Category;
+use App\Models\Department;
+use App\Models\Team;
 use App\Models\User;
 use App\Services\Sla\SlaBreachMonitor;
 use App\Support\Tenancy;
@@ -58,21 +60,33 @@ class DatabaseSeeder extends Seeder
             'name' => 'Admin User',
             'email' => 'admin@example.com',
             'password' => 'password',
-            'department' => 'IT',
         ], Plan::Enterprise, template: HelpDeskTemplate::ItSupport);
 
         $this->tenancy->runAs($admin->organization, function () use ($admin): void {
             $admin->organization->update(['allowed_email_domains' => ['acme.test'], 'allow_self_registration' => false]);
 
-            User::factory()->supervisor()->create(['name' => 'Sam Supervisor', 'email' => 'supervisor@example.com']);
+            $departments = collect(['IT', 'Finance', 'Sales', 'Marketing', 'Operations', 'Human Resources'])
+                ->mapWithKeys(fn (string $name) => [$name => Department::create(['name' => $name])]);
+            $admin->update(['department_id' => $departments['IT']->id]);
+
+            $supervisor = User::factory()->supervisor()->create(['name' => 'Sam Supervisor', 'email' => 'supervisor@example.com', 'department_id' => $departments['IT']->id]);
 
             $agents = User::factory()->agent()->count(2)->sequence(
                 ['name' => 'Agent Smith', 'email' => 'agent@example.com'],
                 ['name' => 'Agent Jones', 'email' => 'agent2@example.com'],
-            )->create();
+            )->create(['department_id' => $departments['IT']->id]);
 
+            $serviceDesk = Team::create(['name' => 'Service Desk', 'description' => 'First line support for everyday issues.', 'color' => 'blue']);
+            $network = Team::create(['name' => 'Network & Infrastructure', 'description' => 'Wi-Fi, VPN, servers and connectivity.', 'color' => 'purple']);
+            $serviceDesk->members()->attach([$agents[0]->id, $supervisor->id]);
+            $network->members()->attach([$agents[1]->id, $supervisor->id]);
+            Category::whereIn('name', ['Hardware', 'Software', 'Printer', 'Account & Access', 'Email', 'Other'])->update(['default_team_id' => $serviceDesk->id]);
+            Category::where('name', 'Network')->update(['default_team_id' => $network->id]);
+
+            $businessDepartments = $departments->except('IT')->values();
             $requesters = User::factory()->count(5)->create()
-                ->push(User::factory()->create(['name' => 'Test User', 'email' => 'test@example.com']));
+                ->push(User::factory()->create(['name' => 'Test User', 'email' => 'test@example.com']))
+                ->each(fn (User $user) => $user->update(['department_id' => $businessDepartments->random()->id]));
 
             $this->call([SlaPolicySeeder::class, WorkflowSeeder::class]);
 
@@ -100,7 +114,7 @@ class DatabaseSeeder extends Seeder
             $owner->organization->update(['allow_self_registration' => true]);
 
             $agents = User::factory()->agent()->count(1)->create(['name' => 'Sophea Staff', 'email' => 'staff@example.com']);
-            $customers = User::factory()->count(3)->create(['department' => null]);
+            $customers = User::factory()->count(3)->create();
 
             $this->seedTickets($customers, $agents, $owner, [
                 'Where is my catering order?', 'Charged twice for my coffee subscription',

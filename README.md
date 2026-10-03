@@ -47,9 +47,18 @@ Built by [Kdigitized Solutions](https://kdigitized.com).
 - Rules made of a trigger (ticket created or updated, reply added, SLA breached), conditions (all or any) and actions.
 - Actions: set status, priority or category; assign to a person or the least busy agent; add an internal note; escalate.
 
+### Teams and departments
+
+- **Agent teams** (Business and Enterprise) such as Service Desk, Network or Billing.
+- Categories route new tickets straight to a team, and members are notified while a ticket waits unassigned.
+- Team queue on the dashboard, a team filter on the ticket list, and a *Route to team* workflow action.
+- *Assign to least busy agent* picks within the ticket's team.
+- Agents see their own teams' tickets even without the *view all tickets* permission.
+- **Departments** for the people who submit tickets, used in user management, exports and workflow conditions.
+
 ### Reports
 
-- Volume over time, SLA compliance, average first response and resolution times, and breakdowns by priority, category and agent.
+- Volume over time, SLA compliance, average first response and resolution times, and breakdowns by priority, category, team and agent.
 - CSV export.
 
 ### Companies, people and permissions
@@ -57,12 +66,14 @@ Built by [Kdigitized Solutions](https://kdigitized.com).
 - Self-service company sign-up with a starting template: General, IT support, Customer service, HR or Facilities.
 - Employees join through the company's join link or an allowed email domain.
 - Sign in with email and password, **Google**, **Facebook** or **Telegram**.
-- Roles with 16 fine-grained permissions, editable per company.
+- Roles with 17 fine-grained permissions, editable per company.
+- Self-service profile: name, email, department, language, time zone, profile photo (with cropping), password, and connected social accounts.
 - Platform console for the operator: every company, plan changes, suspension, onboarding.
 
 ### Experience
 
 - Tabler UI with light and dark mode, responsive down to phone width.
+- Dates are stored in UTC and shown in each person's local time zone. Each company has a time zone, people can override it in their profile, and new sign-ups pick up the browser's zone automatically.
 - In-app and email notifications, delivered in each recipient's own language.
 
 ---
@@ -205,6 +216,7 @@ A provider's button only appears on the login page once its credentials are set.
 | `.env` key | Default | Purpose |
 |---|---|---|
 | `HELPDESK_DEFAULT_ROLE` | `requester` | Role given to people who sign up themselves |
+| `HELPDESK_TIMEZONE` | `Asia/Phnom_Penh` | Time zone for new companies until they choose their own |
 | `HELPDESK_ATTACHMENTS_DISK` | `local` | Private disk for attachments |
 
 ### Mail and queues
@@ -267,6 +279,14 @@ One database is shared by all companies; every company-owned table has an `organ
 
 Changes made by a workflow never trigger other workflows, so rules cannot loop.
 
+### Time zones
+
+- **Storage:** the application timezone stays `UTC`; every timestamp in the database is UTC.
+- **Display:** [`DisplayTimezone`](app/Support/DisplayTimezone.php) holds the viewer's zone (their own, else their company's). Views convert dates with the `forViewer()` Carbon macro, for example `$ticket->created_at->forViewer()->translatedFormat('j M Y, H:i')`.
+- **SLA business hours** such as 09:00–17:00 are read in the company's time zone.
+- **Reports** treat date ranges as whole local days and group the daily chart by local date.
+- **The API** returns ISO-8601 UTC timestamps.
+
 ### Permissions
 
 Each permission is a Laravel gate named after the permission, for example `tickets.view_all`, `reports.view` or `organization.manage`. A gate passes only when the user's role grants the permission **and** the company's plan includes the feature it needs. Routes use `can:` middleware, and views use `@can`.
@@ -291,17 +311,18 @@ curl -X POST https://your-domain/api/v1/auth/token \
 | `POST` | `/auth/token` | Get a token |
 | `DELETE` | `/auth/token` | Revoke the current token |
 | `GET` | `/me` | Current user, role and effective permissions |
-| `GET` | `/tickets` | Filters: `search`, `status`, `priority`, `category`, `assignee=me\|unassigned`, `sla=at_risk\|breached\|escalated`, `per_page` |
+| `GET` | `/tickets` | Filters: `search`, `status`, `priority`, `category`, `assignee=me\|unassigned`, `team=mine\|none\|{id}`, `sla=at_risk\|breached\|escalated`, `per_page` |
 | `POST` | `/tickets` | Create. Accepts multipart `attachments[]` and `voice_note` |
 | `GET` | `/tickets/{id}` | Includes SLA, attachments and escalations |
-| `PATCH` | `/tickets/{id}` | `status`, `priority`, `category_id`, `assignee_id`. Fields you lack permission for are rejected |
+| `PATCH` | `/tickets/{id}` | `status`, `priority`, `category_id`, `assignee_id`, `team_id`. Fields you lack permission for are rejected |
 | `DELETE` | `/tickets/{id}` | Requires `tickets.delete` |
 | `GET` / `POST` | `/tickets/{id}/comments` | Internal notes only for allowed users |
 | `POST` | `/tickets/{id}/escalations` | `reason`, optional `escalate_to_id` |
 | `GET` | `/tickets/{id}/activities` | Staff only |
 | `GET` | `/attachments/{id}` | Download a file |
 | `GET` | `/categories` | |
-| `GET` | `/reports/summary` | `from`, `to` (`Y-m-d`). Requires `reports.view` |
+| `GET` | `/teams` | Requires a plan with teams |
+| `GET` | `/reports/summary` | `from`, `to` (`Y-m-d`, local days). Includes teams and agents. Requires `reports.view` |
 
 ---
 
@@ -348,7 +369,8 @@ vendor/bin/pint
 - [x] English and Khmer
 - [x] Social login (Google, Facebook, Telegram)
 - [x] Multi-tenancy, plans, platform console
-- [ ] Departments and agent teams (team queues, routing, team reports)
+- [x] Departments and agent teams (team queues, routing, team reports)
+- [x] Local time zones
 - [ ] Audit log and full data export
 - [ ] Email to ticket and knowledge base
 - [ ] Enterprise SSO (Microsoft Entra ID, SAML 2.0)

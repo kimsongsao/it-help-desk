@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Enums\Permission;
+use App\Models\Department;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -32,7 +33,6 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
-            'department' => fake()->randomElement(['Finance', 'Sales', 'Marketing', 'Operations', 'HR']),
             'is_active' => true,
         ];
     }
@@ -84,6 +84,16 @@ class UserFactory extends Factory
     }
 
     /**
+     * Put the user in a department, creating one when none is given.
+     */
+    public function inDepartment(?Department $department = null): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'department_id' => $department ?? Department::factory(),
+        ]);
+    }
+
+    /**
      * Indicate that the user's account has been deactivated.
      */
     public function inactive(): static
@@ -100,7 +110,6 @@ class UserFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'role_id' => Role::where('slug', $slug)->value('id'),
-            'department' => 'IT',
         ]);
     }
 }

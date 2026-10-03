@@ -24,6 +24,9 @@
                         <a href="{{ route('tickets.show', $ticket) }}" class="text-reset fw-medium">{{ $ticket->subject }}</a>
                         <div class="text-secondary small">
                             {{ $ticket->reference }} · {{ $ticket->category?->name ? __($ticket->category->name) : __('Uncategorized') }}
+                            @if ($ticket->relationLoaded('team') && $ticket->team)
+                                <span class="badge bg-{{ $ticket->team->color }}-lt ms-1"><i class="ti ti-users-group"></i> {{ $ticket->team->name }}</span>
+                            @endif
                             @if ($ticket->escalation_level > 0)
                                 <span class="badge bg-red-lt ms-1" title="{{ __('Escalation level') }}"><i class="ti ti-arrow-big-up-lines"></i> L{{ $ticket->escalation_level }}</span>
                             @endif
@@ -52,7 +55,7 @@
                             <span class="text-secondary fst-italic">{{ __('Unassigned') }}</span>
                         @endif
                     </td>
-                    <td class="text-secondary text-nowrap" title="{{ $ticket->updated_at->translatedFormat('j M Y, H:i') }}">{{ $ticket->updated_at->diffForHumans() }}</td>
+                    <td class="text-secondary text-nowrap" title="{{ $ticket->updated_at->forViewer()->translatedFormat('j M Y, H:i') }}">{{ $ticket->updated_at->diffForHumans() }}</td>
                 </tr>
             @empty
                 <tr>

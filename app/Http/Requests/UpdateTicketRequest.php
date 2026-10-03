@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\Feature;
 use App\Enums\TicketPriority;
 use App\Enums\TicketStatus;
 use App\Models\Ticket;
@@ -42,6 +43,9 @@ class UpdateTicketRequest extends FormRequest
             'priority' => $canUpdate ? ['sometimes', 'required', Rule::enum(TicketPriority::class)] : ['prohibited'],
             'category_id' => $canUpdate ? ['sometimes', 'required', 'integer', app(Tenancy::class)->exists('categories')] : ['prohibited'],
             'assignee_id' => $this->user()->can('assign', $ticket) ? ['sometimes', 'nullable', new AssignableUser] : ['prohibited'],
+            'team_id' => $this->user()->can('assign', $ticket) && $this->user()->organization->hasFeature(Feature::Teams)
+                ? ['sometimes', 'nullable', 'integer', app(Tenancy::class)->exists('teams')]
+                : ['prohibited'],
         ];
     }
 

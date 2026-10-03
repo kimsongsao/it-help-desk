@@ -23,7 +23,7 @@ class TicketController extends Controller
     {
         $tickets = Ticket::visibleTo($request->user())
             ->filter($request->validated(), $request->user())
-            ->with(['requester', 'assignee', 'category'])
+            ->with(['requester', 'assignee', 'category', 'team'])
             ->latest()
             ->paginate($request->integer('per_page', 15))
             ->withQueryString();
@@ -38,7 +38,7 @@ class TicketController extends Controller
     {
         $ticket = $createTicket->handle($request->user(), $request->ticketAttributes(), $request->uploadedAttachments(), $request->file('voice_note'));
 
-        return TicketResource::make($ticket->load(['requester', 'assignee', 'category', 'slaPolicy', 'ticketAttachments']));
+        return TicketResource::make($ticket->load(['requester', 'assignee', 'category', 'team', 'slaPolicy', 'ticketAttachments']));
     }
 
     /**
@@ -48,7 +48,7 @@ class TicketController extends Controller
     {
         Gate::authorize('view', $ticket);
 
-        return TicketResource::make($ticket->load(['requester', 'assignee', 'category', 'slaPolicy', 'ticketAttachments', 'escalations.escalatedBy', 'escalations.escalatedTo']));
+        return TicketResource::make($ticket->load(['requester', 'assignee', 'category', 'team', 'slaPolicy', 'ticketAttachments', 'escalations.escalatedBy', 'escalations.escalatedTo']));
     }
 
     /**
@@ -58,7 +58,7 @@ class TicketController extends Controller
     {
         $updateTicket->handle($ticket, $request->validated(), $request->user());
 
-        return TicketResource::make($ticket->fresh(['requester', 'assignee', 'category', 'slaPolicy']));
+        return TicketResource::make($ticket->fresh(['requester', 'assignee', 'category', 'team', 'slaPolicy']));
     }
 
     /**
